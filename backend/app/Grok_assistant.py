@@ -1,3 +1,4 @@
+#this value can be a normal value or None.
 from typing import Optional
 import time
 
@@ -5,7 +6,7 @@ import requests
 
 from app.base_assistant import BaseAssistant
 
-
+#creates a new class named GrokAssistant that extends BaseAssistant
 class GrokAssistant(BaseAssistant):
     @property
     def name(self) -> str:
