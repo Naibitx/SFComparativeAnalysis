@@ -82,4 +82,4 @@ class CoPilotAssistant(BaseAssistant):
             code = parts[0].replace("CODE:", "").strip()
         else:
             code = content.strip()
-        return code, explanations
+        return code, explanation
