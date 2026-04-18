@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pydantic_settings import BaseSettings
 
-class Settings(BaseSettings):#this wll load enviornment variables from our .env
+class Settings(BaseSettings):#this wll load environment variables from our .env
 
     #app settings below
     app_name: str = "AI Comparator"
