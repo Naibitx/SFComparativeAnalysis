@@ -1,4 +1,4 @@
-""" Implementation of BaseAssistant for GitHub CoPilot """
+""" Implementation of BaseAssistant for CoPilot """
 
 import time
 from typing import Optional
