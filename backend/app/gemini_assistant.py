@@ -5,7 +5,7 @@ from google.api_core import exceptions
 from base_assistant import BaseAssistant
 
 class GeminiAssistant(BaseAssistant):
-    """Concrete implementation of the Gemini AI assistant."""
+    """Implementation of the Gemini AI assistant."""
 
     def __init__(self, api_key: str, model_version: str = "gemini-1.5-pro"):
         super().__init__(api_key, model_version)
@@ -30,7 +30,7 @@ class GeminiAssistant(BaseAssistant):
         system_prompt = (
             f"You are an expert {language} developer. "
             "Return only the code with a brief explanation. "
-            "Format your response exactly as:\nCODE:\n<code>\nEXPLANATION:\n<explanation>"
+            "Format response exactly as:\nCODE:\n<code>\nEXPLANATION:\n<explanation>"
         )
         user_message = f"{context}\n\n{prompt}" if context else prompt
 
