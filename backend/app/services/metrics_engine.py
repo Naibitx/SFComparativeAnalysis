@@ -3,20 +3,20 @@ metrics_engine.py
 -----------------
 Runs evaluations on assistants that inherit from BaseAssistant.
 """
-
 from __future__ import annotations
 
 import ast
 import io
+import sys
+import os
 import time
 import traceback
 import contextlib
 from dataclasses import dataclass
 from typing import Any, Optional
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from base_assistant import BaseAssistant
-
-
 @dataclass
 class TestCase:
     input_data: Any
