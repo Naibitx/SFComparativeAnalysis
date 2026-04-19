@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "AI Assistant Comparison Report" }}</title>
+    <style>
+        :root {
+            --bg: #f6f4ee;
+            --panel: #fffdf8;
+            --panel-strong: #ffffff;
+            --ink: #1f2933;
+            --muted: #61717f;
+            --line: #d8d2c4;
+            --accent: #0f766e;
+            --accent-soft: #d9f3ef;
+            --success: #1d7a46;
+            --danger: #b42318;
+            --warning: #b7791f;
+            --shadow: 0 14px 40px rgba(31, 41, 51, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Georgia", "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 30%),
+                linear-gradient(180deg, #faf7f1 0%, var(--bg) 100%);
+            line-height: 1.55;
+        }
+
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 40px 20px 72px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(255, 255, 255, 0.92));
+            border: 1px solid rgba(15, 118, 110, 0.16);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            font-weight: 700;
+            line-height: 1.15;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            margin-bottom: 14px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+
+        h3 {
+            font-size: 1.05rem;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin: 0 0 14px;
+        }
+
+        .meta-grid,
+        .summary-grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+
+        .meta-card,
+        .summary-card,
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .meta-card,
+        .summary-card {
+            padding: 16px 18px;
+        }
+
+        .label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        .value {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .section {
+            margin-top: 24px;
+        }
+
+        .panel {
+            padding: 22px;
+            overflow: hidden;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+        }
+
+        th,
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: rgba(15, 118, 110, 0.07);
+            color: var(--accent);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .run-card {
+            margin-top: 24px;
+            background: var(--panel-strong);
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .run-header {
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(255, 255, 255, 0.96));
+            border-bottom: 1px solid var(--line);
+        }
+
+        .run-body {
+            padding: 24px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .detail-grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+
+        .detail-card {
+            padding: 16px;
+            border-radius: 16px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+
+        .badge.success {
+            background: rgba(29, 122, 70, 0.12);
+            color: var(--success);
+        }
+
+        .badge.failed {
+            background: rgba(180, 35, 24, 0.12);
+            color: var(--danger);
+        }
+
+        .badge.pending {
+            background: rgba(183, 121, 31, 0.14);
+            color: var(--warning);
+        }
+
+        pre {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            border-radius: 16px;
+            background: #13202b;
+            color: #edf2f7;
+            font-size: 0.92rem;
+        }
+
+        .empty {
+            padding: 28px;
+            text-align: center;
+            color: var(--muted);
+            border: 1px dashed var(--line);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        @media (max-width: 700px) {
+            .page {
+                padding: 24px 14px 56px;
+            }
+
+            .hero,
+            .panel,
+            .run-header,
+            .run-body {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% set report_title = title or "AI Assistant Comparison Report" %}
+    {% set run_items = runs if runs is defined and runs else [] %}
+    {% set generated_at_value = generated_at or timestamp or "N/A" %}
+    {% set task_name_value = task_name or task.name if task is defined and task else "N/A" %}
+    {% set task_code_value = task_code or task.task_code if task is defined and task else "N/A" %}
+    {% set language_value = language or (task.default_language.name if task is defined and task.default_language else "N/A") %}
+
+    <main class="page">
+        <section class="hero">
+            <p class="eyebrow">Comparative Analysis</p>
+            <h1>{{ report_title }}</h1>
+            <p>This report compares assistant performance across generation quality, execution behavior, and recorded security observations.</p>
+
+            <div class="meta-grid">
+                <div class="meta-card">
+                    <span class="label">Generated At</span>
+                    <span class="value">{{ generated_at_value }}</span>
+                </div>
+                <div class="meta-card">
+                    <span class="label">Task</span>
+                    <span class="value">{{ task_name_value }}</span>
+                </div>
+                <div class="meta-card">
+                    <span class="label">Task Code</span>
+                    <span class="value">{{ task_code_value }}</span>
+                </div>
+                <div class="meta-card">
+                    <span class="label">Language</span>
+                    <span class="value">{{ language_value }}</span>
+                </div>
+            </div>
+        </section>
+
+        {% if summary is defined and summary %}
+        <section class="section panel">
+            <h2>Executive Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <span class="label">Assistants Compared</span>
+                    <span class="value">{{ summary.total_assistants or run_items|length }}</span>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Successful Executions</span>
+                    <span class="value">{{ summary.successful_executions or 0 }}</span>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Failed Executions</span>
+                    <span class="value">{{ summary.failed_executions or 0 }}</span>
+                </div>
+                <div class="summary-card">
+                    <span class="label">Top Assistant</span>
+                    <span class="value">{{ summary.top_assistant or "N/A" }}</span>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if run_items %}
+        <section class="section panel">
+            <h2>Results Overview</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Assistant</th>
+                            <th>Provider</th>
+                            <th>Status</th>
+                            <th>Score</th>
+                            <th>Tokens</th>
+                            <th>Latency (ms)</th>
+                            <th>Execution Time (ms)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for run in run_items %}
+                        {% set assistant_name = run.assistant.name if run.assistant is defined and run.assistant else run.assistant_name or run.assistant or "Unknown" %}
+                        {% set provider_name = run.assistant.provider if run.assistant is defined and run.assistant else run.provider or "N/A" %}
+                        {% set status_value = run.status.value if run.status is defined and run.status and run.status.value is defined else run.status or ("completed" if run.execution_success else "failed") %}
+                        <tr>
+                            <td>{{ assistant_name }}</td>
+                            <td>{{ provider_name }}</td>
+                            <td>{{ status_value }}</td>
+                            <td>{{ run.overall_score if run.overall_score is not none else "N/A" }}</td>
+                            <td>{{ run.tokens_used if run.tokens_used is not none else "N/A" }}</td>
+                            <td>{{ run.latency_ms if run.latency_ms is not none else "N/A" }}</td>
+                            <td>{{ run.execution_time_ms if run.execution_time_ms is not none else "N/A" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        {% for run in run_items %}
+        {% set assistant_name = run.assistant.name if run.assistant is defined and run.assistant else run.assistant_name or run.assistant or "Assistant Result" %}
+        {% set provider_name = run.assistant.provider if run.assistant is defined and run.assistant else run.provider or "N/A" %}
+        {% set status_value = run.status.value if run.status is defined and run.status and run.status.value is defined else run.status or ("completed" if run.execution_success else "failed") %}
+        {% set status_class = "success" if (run.execution_success or status_value == "completed") else "failed" if status_value == "failed" else "pending" %}
+        {% set findings = run.security_findings if run.security_findings is defined and run.security_findings else run.findings if run.findings is defined and run.findings else [] %}
+
+        <section class="run-card">
+            <div class="run-header">
+                <p class="eyebrow">Assistant Result</p>
+                <h2>{{ assistant_name }}</h2>
+                <p>{{ provider_name }}</p>
+                <span class="badge {{ status_class }}">{{ status_value }}</span>
+            </div>
+
+            <div class="run-body">
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <span class="label">Run ID</span>
+                        <div class="value">{{ run.run_id or run.id or "N/A" }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <span class="label">Overall Score</span>
+                        <div class="value">{{ run.overall_score if run.overall_score is not none else "N/A" }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <span class="label">Tokens Used</span>
+                        <div class="value">{{ run.tokens_used if run.tokens_used is not none else "N/A" }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <span class="label">Latency (ms)</span>
+                        <div class="value">{{ run.latency_ms if run.latency_ms is not none else "N/A" }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <span class="label">Execution Time (ms)</span>
+                        <div class="value">{{ run.execution_time_ms if run.execution_time_ms is not none else "N/A" }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <span class="label">Workspace</span>
+                        <div class="value">{{ run.workspace_path or "N/A" }}</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>Prompt</h3>
+                    <pre>{{ run.prompt_text or run.prompt or "No prompt captured." }}</pre>
+                </div>
+
+                <div class="panel">
+                    <h3>Generated Code</h3>
+                    <pre>{{ run.generated_code or run.code or "No generated code captured." }}</pre>
+                </div>
+
+                <div class="panel">
+                    <h3>Execution Output</h3>
+                    <pre>{{ run.execution_output or run.stdout or "No execution output captured." }}</pre>
+                </div>
+
+                <div class="panel">
+                    <h3>Error Output</h3>
+                    <pre>{{ run.execution_error or run.stderr or "No execution errors captured." }}</pre>
+                </div>
+
+                {% if run.correctness is defined and run.correctness %}
+                <div class="panel">
+                    <h3>Correctness</h3>
+                    <div class="detail-grid">
+                        <div class="detail-card">
+                            <span class="label">Tested</span>
+                            <div class="value">{{ run.correctness.tested if run.correctness.tested is not none else "N/A" }}</div>
+                        </div>
+                        <div class="detail-card">
+                            <span class="label">Passed</span>
+                            <div class="value">{{ run.correctness.passed if run.correctness.passed is not none else "N/A" }}</div>
+                        </div>
+                        <div class="detail-card">
+                            <span class="label">Expected</span>
+                            <div class="value">{{ run.correctness.expected if run.correctness.expected is not none else "N/A" }}</div>
+                        </div>
+                        <div class="detail-card">
+                            <span class="label">Actual</span>
+                            <div class="value">{{ run.correctness.actual if run.correctness.actual is not none else "N/A" }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if run.syntax is defined and run.syntax %}
+                <div class="panel">
+                    <h3>Syntax Analysis</h3>
+                    <p><strong>Passed:</strong> {{ run.syntax.success if run.syntax.success is not none else "N/A" }}</p>
+                    <p><strong>Error:</strong> {{ run.syntax.error if run.syntax.error else "None" }}</p>
+                </div>
+                {% endif %}
+
+                {% if run.runtime is defined and run.runtime %}
+                <div class="panel">
+                    <h3>Runtime Analysis</h3>
+                    <p><strong>Passed:</strong> {{ run.runtime.success if run.runtime.success is not none else "N/A" }}</p>
+                    <p><strong>Execution Time (ms):</strong> {{ run.runtime.execution_time_ms if run.runtime.execution_time_ms is not none else "N/A" }}</p>
+                    <p><strong>Error:</strong> {{ run.runtime.error if run.runtime.error else "None" }}</p>
+                </div>
+                {% endif %}
+
+                <div class="panel">
+                    <h3>Security Findings</h3>
+                    {% if findings %}
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Severity</th>
+                                    <th>Category</th>
+                                    <th>Title</th>
+                                    <th>File</th>
+                                    <th>Line</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for finding in findings %}
+                                <tr>
+                                    <td>{{ finding.severity.value if finding.severity is defined and finding.severity and finding.severity.value is defined else finding.severity or "N/A" }}</td>
+                                    <td>{{ finding.category or "N/A" }}</td>
+                                    <td>{{ finding.title or "N/A" }}</td>
+                                    <td>{{ finding.file_path or "N/A" }}</td>
+                                    <td>{{ finding.line_number if finding.line_number is not none else "N/A" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty">No security findings were recorded for this run.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+        {% endfor %}
+        {% else %}
+        <section class="empty">
+            No comparison runs were supplied to this template.
+        </section>
+        {% endif %}
+    </main>
+</body>
+</html>
