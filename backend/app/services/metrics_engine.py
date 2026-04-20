@@ -4,6 +4,7 @@ metrics_engine.py
 Runs evaluations on assistants that inherit from BaseAssistant.
 """
 from __future__ import annotations
+from readability_engine import ReadabilityEngine
 
 import ast
 import io
@@ -26,7 +27,7 @@ class TestCase:
 
 class MetricsEngine:
     def __init__(self) -> None:
-        pass
+        self._readability_engine = ReadabilityEngine()
 
     def evaluate_assistant(
         self,
@@ -105,9 +106,8 @@ class MetricsEngine:
             entry_function=entry_function,
         )
 
-        # Use passed-in readability result if available
         if readability_result is None:
-            readability_result = self._default_readability_result()
+            readability_result = self._readability_engine.analyse(code)
 
         # Use passed-in security result if available
         if security_result is None:
