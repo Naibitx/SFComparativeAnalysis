@@ -1,10 +1,8 @@
 """
-base_assistant.py
------------------
 Abstract base class that defines the common interface all AI coding assistants
-must implement in the comparative analysis project.
+must implement in the project.
  
-Supported assistants: ChatGPT, CoPilot, Gemini, Grok, Claude
+Assistants of choice: ChatGPT, CoPilot, Gemini, Grok, Claude
 """
  
 from abc import ABC, abstractmethod
@@ -16,19 +14,17 @@ class BaseAssistant(ABC):
     """
     Abstract base class for all AI coding assistants.
  
-    Every concrete assistant (ChatGPT, CoPilot, Gemini, Grok, Claude) must
-    subclass this and implement every @abstractmethod.
+    Every  assistant must subclass this and implement every @abstractmethod.
  
-    Response format (returned by generate_code)
+    Response format returned by generate_code
     """
  
     def __init__(self, api_key: str, model_version: str = ""):
         """
-        Parameters
-        ----------
+        Parameters:
         api_key : str
             Credential used to authenticate with the provider's API.
-        model_version : str, optional
+        model_version : str, 
             Specific model string (e.g. "gpt-4o", "gemini-1.5-pro").
         """
         if not api_key:
@@ -36,8 +32,7 @@ class BaseAssistant(ABC):
         self._api_key = api_key
         self.model_version = model_version
  
-    # Identity — must be defined as class-level attributes by subclasses
-
+    # Identity - must be defined as class-level attributes by subclasses
     @property
     @abstractmethod
     def name(self) -> str:
@@ -48,8 +43,7 @@ class BaseAssistant(ABC):
     def provider(self) -> str:
         """Company behind the assistant, e.g. 'Anthropic', 'OpenAI'."""
  
-    # Core capabilities — must be implemented by every subclass
- 
+    # Core capabilities - must be implemented by every subclass
     @abstractmethod
     def generate_code(
         self,
@@ -72,8 +66,6 @@ class BaseAssistant(ABC):
         """
  
     # Shared helpers available to all subclasses
-
- 
     def _base_response(self, language: str, code: str, explanation: str = "",
                        tokens_used: Optional[int] = None,
                        latency_ms: Optional[float] = None) -> dict:

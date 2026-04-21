@@ -24,7 +24,7 @@ def r_pipe(task_code: str, assistant: str):
 
     metrics = compute_metrics(execution)#compute the metrics we need from the execution 
 
-    return {#the results we would get
+    return { #the results we would get
         "workspace": workspace,
         "execution": execution,
         "metrics": metrics,

@@ -34,7 +34,6 @@ CORRECTNESS_TESTS = {
 
 
 # Toolchain detector
-
 def detect_toolchain(code: str) -> dict:
     """Detects Python version and key stdlib/third-party imports used."""
     try:
@@ -58,7 +57,6 @@ def detect_toolchain(code: str) -> dict:
 
 
 # Safety check
-
 def _is_safe(code: str) -> tuple[bool, str]:
     for module in BLOCKED_IMPORTS:
         if f"import {module}" in code or f"from {module}" in code:
