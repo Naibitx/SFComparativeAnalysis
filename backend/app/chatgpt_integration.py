@@ -18,7 +18,7 @@ class ChatGPTAssistant(BaseAssistant):
 
     # Sets up the assistant by calling the base class constructor
     # and creating an OpenAI client for API requests
-    def __init__(self, api_key: str, model_version: str = "gpt-5.2"):
+    def __init__(self, api_key: str, model_version: str = "gpt-5.4"):
         super().__init__(api_key, model_version)
         self._client = OpenAI(api_key=self._api_key)
 
