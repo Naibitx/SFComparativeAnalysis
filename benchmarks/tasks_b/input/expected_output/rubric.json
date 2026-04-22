@@ -1,0 +1,38 @@
+{
+  "task": "B",
+  "title": "Read Data Values from a JSON File Using Multiple Threads",
+  "entry_function": "read_json_files_threaded",
+  "criteria": [
+    {
+      "id": "B1",
+      "description": "Defines a function that accepts a list of file paths as a parameter",
+      "weight": 10
+    },
+    {
+      "id": "B2",
+      "description": "Uses Python's threading module to spawn one thread per file",
+      "weight": 25
+    },
+    {
+      "id": "B3",
+      "description": "Each thread independently reads and parses its assigned JSON file",
+      "weight": 20
+    },
+    {
+      "id": "B4",
+      "description": "Returns a dictionary mapping each file path to its parsed JSON content",
+      "weight": 20
+    },
+    {
+      "id": "B5",
+      "description": "Uses a thread-safe mechanism (e.g. Lock or thread-safe structure) when writing results",
+      "weight": 15
+    },
+    {
+      "id": "B6",
+      "description": "Handles missing files or invalid JSON gracefully per thread",
+      "weight": 10
+    }
+  ],
+  "total_weight": 100
+}

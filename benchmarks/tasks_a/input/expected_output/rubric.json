@@ -1,0 +1,33 @@
+{
+  "task": "A",
+  "title": "Read Data from a Text File",
+  "entry_function": "read_text_file",
+  "criteria": [
+    {
+      "id": "A1",
+      "description": "Defines a function that accepts a file path parameter",
+      "weight": 10
+    },
+    {
+      "id": "A2",
+      "description": "Opens the file using a 'with' statement or equivalent safe file handling",
+      "weight": 20
+    },
+    {
+      "id": "A3",
+      "description": "Reads and returns the full file contents as a string",
+      "weight": 30
+    },
+    {
+      "id": "A4",
+      "description": "Handles the case where the file does not exist (FileNotFoundError or equivalent)",
+      "weight": 25
+    },
+    {
+      "id": "A5",
+      "description": "Does not leave the file handle open after reading",
+      "weight": 15
+    }
+  ],
+  "total_weight": 100
+}

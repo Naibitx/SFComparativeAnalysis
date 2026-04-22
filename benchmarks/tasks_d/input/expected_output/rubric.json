@@ -1,0 +1,38 @@
+{
+  "task": "D",
+  "title": "Write Data Values into a JSON File Using Multiple Threads",
+  "entry_function": "write_json_files_threaded",
+  "criteria": [
+    {
+      "id": "D1",
+      "description": "Defines a function that accepts a list of (file_path, data) tuples",
+      "weight": 10
+    },
+    {
+      "id": "D2",
+      "description": "Uses Python's threading module to spawn one thread per file",
+      "weight": 25
+    },
+    {
+      "id": "D3",
+      "description": "Each thread independently serializes data to JSON and writes to its file",
+      "weight": 20
+    },
+    {
+      "id": "D4",
+      "description": "Returns a dictionary mapping each file path to True (success) or False (failure)",
+      "weight": 20
+    },
+    {
+      "id": "D5",
+      "description": "Uses a thread-safe mechanism when writing to the results dictionary",
+      "weight": 15
+    },
+    {
+      "id": "D6",
+      "description": "Handles write errors per thread without crashing the other threads",
+      "weight": 10
+    }
+  ],
+  "total_weight": 100
+}

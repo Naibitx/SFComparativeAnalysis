@@ -1,0 +1,5 @@
+{
+  "file1.json": {"name": "Alice", "age": 30, "city": "New York"},
+  "file2.json": {"product": "Laptop", "price": 999.99, "in_stock": true},
+  "file3.json": {"scores": [95, 87, 76, 100], "subject": "Mathematics", "passing": true}
+}

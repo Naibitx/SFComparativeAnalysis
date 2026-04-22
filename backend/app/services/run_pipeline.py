@@ -5,8 +5,10 @@ from datetime import datetime
 from app.services.prompt_builder import build_prompt
 from app.services.workspace_manager import create_workspace, save_file
 from app.services.execution_engine import run_code
-from app.services.metrics_engine import compute_metrics
+from app.services.metrics_engine import MetricsEngine
 
+engine = MetricsEngine()
+metrics = engine.evaluate_assistant(assistant, prompt, expected_output)
 
 def r_pipe(task_code: str, assistant: str):
 

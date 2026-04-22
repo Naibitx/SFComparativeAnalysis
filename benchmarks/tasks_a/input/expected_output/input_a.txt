@@ -1,0 +1,5 @@
+Hello, this is a sample text file.
+It contains multiple lines of data.
+Line 3: some numbers 1234567890.
+Line 4: special characters !@#$%^&*().
+End of file.

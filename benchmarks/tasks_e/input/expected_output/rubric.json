@@ -1,0 +1,33 @@
+{
+  "task": "E",
+  "title": "Produce a Zip Archive via an External Application",
+  "entry_function": "zip_file",
+  "criteria": [
+    {
+      "id": "E1",
+      "description": "Defines a function that accepts an input file path and output zip path as parameters",
+      "weight": 10
+    },
+    {
+      "id": "E2",
+      "description": "Uses Python's subprocess module to invoke the external zip command",
+      "weight": 30
+    },
+    {
+      "id": "E3",
+      "description": "Does NOT use Python's zipfile module — archive is produced by the external command",
+      "weight": 20
+    },
+    {
+      "id": "E4",
+      "description": "Returns True if the archive was created successfully, False otherwise",
+      "weight": 20
+    },
+    {
+      "id": "E5",
+      "description": "Handles errors such as zip command not found or input file not existing",
+      "weight": 20
+    }
+  ],
+  "total_weight": 100
+}

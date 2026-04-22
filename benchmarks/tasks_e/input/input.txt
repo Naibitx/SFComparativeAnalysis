@@ -1,0 +1,5 @@
+This is the input text file for Task E.
+It will be passed as an argument to the external zip command.
+Line 3: sample data for compression testing.
+Line 4: more content to ensure the file has substance.
+End of file.

@@ -1,0 +1,5 @@
+[
+  ["output1.json", {"city": "Miami", "population": 442241, "state": "Florida"}],
+  ["output2.json", {"language": "Python", "version": 3.12, "open_source": true}],
+  ["output3.json", {"items": ["apple", "banana", "cherry"], "count": 3}]
+]

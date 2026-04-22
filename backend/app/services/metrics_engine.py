@@ -3,8 +3,6 @@ metrics_engine.py
 -----------------
 Runs evaluations on assistants that inherit from BaseAssistant.
 """
-from __future__ import annotations
-
 import ast
 import io
 import sys
@@ -12,13 +10,13 @@ import os
 import time
 import traceback
 import contextlib
+import signal
 from dataclasses import dataclass
 from typing import Any, Optional
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from readability_engine import ReadabilityEngine
-from base_assistant import BaseAssistant
-
+from app.services.readability_engine import ReadabilityEngine
+from app.services.security_scanner import SecurityScanner
+from app.base_assistant import BaseAssistant
+ 
  
 RUNTIME_TIMEOUT_SECONDS = 10
  
@@ -33,6 +31,7 @@ class TestCase:
 class MetricsEngine:
     def __init__(self) -> None:
         self._readability_engine = ReadabilityEngine()
+        self._security_scanner = SecurityScanner()
  
     def evaluate_assistant(
         self,
@@ -115,7 +114,7 @@ class MetricsEngine:
             readability_result = self._readability_engine.analyse(code)
  
         if security_result is None:
-            security_result = self._default_security_result()
+            security_result = self._security_scanner.scan(code)
  
         overall_score = self._compute_overall_score(
             syntax_result=syntax_result,
@@ -202,7 +201,7 @@ class MetricsEngine:
             }
  
     def _check_python_runtime(self, code: str) -> dict:
-        
+ 
         namespace: dict[str, Any] = {}
         stdout_buffer = io.StringIO()
         stderr_buffer = io.StringIO()
@@ -360,11 +359,11 @@ class MetricsEngine:
             "error": None,
         }
  
-    # Placeholder until Coverity/security_engine is completed
+    # Kept as fallback for when a result is passed in externally as None
     def _default_security_result(self) -> dict:
         return {
             "available": False,
-            "tool": "Coverity",
+            "tool": "Bandit",
             "score": None,
             "findings": [],
             "error": "Security scan not run yet",
@@ -433,4 +432,3 @@ class MetricsEngine:
             correctness_score * 0.50
         )
         return round(overall, 2)
- 

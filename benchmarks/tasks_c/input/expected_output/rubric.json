@@ -1,0 +1,33 @@
+{
+  "task": "C",
+  "title": "Write Data into a Text File",
+  "entry_function": "write_text_file",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Defines a function that accepts file path and content string as parameters",
+      "weight": 10
+    },
+    {
+      "id": "C2",
+      "description": "Opens the file in write mode using a 'with' statement or equivalent safe handling",
+      "weight": 20
+    },
+    {
+      "id": "C3",
+      "description": "Writes the full content string to the file correctly",
+      "weight": 30
+    },
+    {
+      "id": "C4",
+      "description": "Handles write errors gracefully (e.g. PermissionError, OSError)",
+      "weight": 25
+    },
+    {
+      "id": "C5",
+      "description": "Returns True on success and False on failure",
+      "weight": 15
+    }
+  ],
+  "total_weight": 100
+}

@@ -1,0 +1,5 @@
+{
+  "expected": "A valid zip archive file (sample.zip) containing sample.txt",
+  "validation": "The function must return True and the output zip file must exist on disk and be a valid zip archive containing the input file",
+  "check_method": "Use Python's zipfile.is_zipfile() to verify the archive is valid, and zipfile.ZipFile().namelist() to confirm sample.txt is present inside"
+}
