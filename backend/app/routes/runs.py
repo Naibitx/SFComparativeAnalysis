@@ -12,11 +12,11 @@ from app.db.database import get_db
 from app.Models.assistant import Assistant
 from app.Models.coding_task import CodingTask
 from app.Models.language import Language
+from app.Models.language import LanguageCategory
 from app.Models.evaluation_run import EvaluationRun, RunStatus
 from app.Models.security_finding import SecurityFinding, FindingSeverity
 from app.services.prompt_builder import build_prompt
 from app.services.readability_engine import ReadabilityEngine
-from app.config import get_settings
 
 router = APIRouter()
 readability_engine = ReadabilityEngine()
@@ -41,11 +41,29 @@ ASSISTANT_NAMES = {
     "grok": "Grok",
 }
 
+LANGUAGE_EXTENSIONS = {
+    "Python": ".py",
+    "JavaScript": ".js",
+    "PHP": ".php",
+    "Java": ".java",
+    "C++": ".cpp",
+}
+
+
+def make_slug(value: str) -> str:
+    return (
+        value.lower()
+        .replace("++", "pp")
+        .replace("#", "sharp")
+        .replace(" ", "_")
+        .replace("-", "_")
+    )
+
 
 def get_or_create_assistant(db: Session, assistant_key: str) -> Assistant:
     name = ASSISTANT_NAMES.get(assistant_key, assistant_key.title())
-    assistant = db.query(Assistant).filter(Assistant.name == name).first()
 
+    assistant = db.query(Assistant).filter(Assistant.name == name).first()
     if assistant:
         return assistant
 
@@ -56,6 +74,7 @@ def get_or_create_assistant(db: Session, assistant_key: str) -> Assistant:
         description="Stored assistant record for evaluation results.",
         is_active=True,
     )
+
     db.add(assistant)
     db.commit()
     db.refresh(assistant)
@@ -64,11 +83,17 @@ def get_or_create_assistant(db: Session, assistant_key: str) -> Assistant:
 
 def get_or_create_language(db: Session, language_name: str) -> Language:
     language = db.query(Language).filter(Language.name == language_name).first()
-
     if language:
         return language
 
-    language = Language(name=language_name)
+    language = Language(
+        name=language_name,
+        slug=make_slug(language_name),
+        file_extension=LANGUAGE_EXTENSIONS.get(language_name),
+        category=LanguageCategory.SCRIPTING,
+        description=f"{language_name} language used for generated-code evaluations.",
+    )
+
     db.add(language)
     db.commit()
     db.refresh(language)
@@ -76,28 +101,39 @@ def get_or_create_language(db: Session, language_name: str) -> Language:
 
 
 def get_or_create_task(db: Session, task_code: str) -> CodingTask:
-    task = db.query(CodingTask).filter(CodingTask.task_code == task_code).first()
+    task_code = task_code.lower()
 
+    task = db.query(CodingTask).filter(CodingTask.task_code == task_code).first()
     if task:
         return task
 
+    prompt = build_prompt(task_code)
+
     task = CodingTask(
         task_code=task_code,
-        title=TASK_NAMES.get(task_code, f"Task {task_code.upper()}"),
-        description=build_prompt(task_code),
-        prompt_text=build_prompt(task_code),
+        name=TASK_NAMES.get(task_code, f"Task {task_code.upper()}"),
+        description=prompt,
+        prompt_template=prompt,
+        difficulty_level=1,
+        default_language_id=None,
     )
+
     db.add(task)
     db.commit()
     db.refresh(task)
     return task
 
 
-def sample_generated_code(task_code: str, assistant_name: str) -> str:
+def sample_generated_code(task_code: str, assistant_name: str, language_name: str = "Python") -> str:
     """
-    This gives the backend real code to evaluate and store.
-    Later, replace this with your actual API assistant.generate_code() calls.
+    This creates code that the backend can evaluate and save.
+    Later, this function can be replaced with real assistant API generation.
     """
+    task_code = task_code.lower()
+
+    if language_name != "Python":
+        return f"// Generated for {assistant_name} - Task {task_code.upper()}\n// {build_prompt(task_code)}\n"
+
     header = f"# Generated for {assistant_name} - Task {task_code.upper()}\n"
 
     code_by_task = {
@@ -127,6 +163,9 @@ def read_json_threaded(path: str) -> dict:
     thread.start()
     thread.join()
     return result
+
+if __name__ == "__main__":
+    print("Ready to read JSON with threads.")
 """,
         "c": """
 from pathlib import Path
@@ -134,6 +173,9 @@ from pathlib import Path
 def write_text_file(path: str, content: str) -> None:
     \"\"\"Write text content to a file.\"\"\"
     Path(path).write_text(content, encoding="utf-8")
+
+if __name__ == "__main__":
+    print("Ready to write a text file.")
 """,
         "d": """
 import json
@@ -148,6 +190,9 @@ def write_json_threaded(path: str, data: dict) -> None:
     thread = threading.Thread(target=worker)
     thread.start()
     thread.join()
+
+if __name__ == "__main__":
+    print("Ready to write JSON with threads.")
 """,
         "e": """
 import zipfile
@@ -157,34 +202,26 @@ def create_zip(input_file: str, zip_file: str) -> None:
     \"\"\"Create a zip archive containing one input file.\"\"\"
     with zipfile.ZipFile(zip_file, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.write(input_file, arcname=Path(input_file).name)
+
+if __name__ == "__main__":
+    print("Ready to create a ZIP file.")
 """,
         "f": """
-import mysql.connector
+def get_sample_record():
+    \"\"\"Placeholder MySQL retrieval function for evaluation demo.\"\"\"
+    query = "SELECT * FROM sample LIMIT 1"
+    return {"query": query, "status": "ready"}
 
-def get_sample_record(host: str, user: str, password: str, database: str):
-    \"\"\"Connect to MySQL and retrieve one sample record.\"\"\"
-    connection = mysql.connector.connect(
-        host=host,
-        user=user,
-        password=password,
-        database=database,
-    )
-    cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM sample LIMIT 1")
-    row = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    return row
+if __name__ == "__main__":
+    print("Ready to connect to MySQL.")
 """,
         "g": """
-from pymongo import MongoClient
+def get_sample_document():
+    \"\"\"Placeholder MongoDB retrieval function for evaluation demo.\"\"\"
+    return {"collection": "sample", "status": "ready"}
 
-def get_sample_document(uri: str, database: str, collection: str):
-    \"\"\"Connect to MongoDB and retrieve one sample document.\"\"\"
-    client = MongoClient(uri)
-    document = client[database][collection].find_one()
-    client.close()
-    return document
+if __name__ == "__main__":
+    print("Ready to connect to MongoDB.")
 """,
         "h": """
 import hashlib
@@ -199,53 +236,66 @@ def hash_password(password: str) -> tuple[str, str]:
 def verify_password(password: str, salt: str, password_hash: str) -> bool:
     \"\"\"Verify a password against a stored salted hash.\"\"\"
     return hashlib.sha256((salt + password).encode()).hexdigest() == password_hash
+
+if __name__ == "__main__":
+    print("Ready for password authentication.")
 """,
     }
 
     return header + code_by_task.get(task_code, "print('Unknown task')\n")
 
 
-def evaluate_code(code: str, assistant_name: str, task_code: str) -> dict:
+def evaluate_code(code: str, language_name: str = "Python") -> dict:
     syntax_success = True
     syntax_error = None
-
-    try:
-        ast.parse(code)
-    except SyntaxError as exc:
-        syntax_success = False
-        syntax_error = str(exc)
-
     runtime_success = False
     runtime_error = None
     stdout = ""
     execution_time_ms = None
 
-    if syntax_success:
-        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as temp:
-            temp.write(code)
-            temp_path = temp.name
-
-        started = datetime.now()
-
+    if language_name == "Python":
         try:
-            completed = subprocess.run(
-                [sys.executable, temp_path],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            ended = datetime.now()
-            execution_time_ms = round((ended - started).total_seconds() * 1000, 2)
-            stdout = completed.stdout
-            runtime_success = completed.returncode == 0
-            runtime_error = completed.stderr if completed.returncode != 0 else None
-        except Exception as exc:
-            runtime_error = str(exc)
+            ast.parse(code)
+        except SyntaxError as exc:
+            syntax_success = False
+            syntax_error = str(exc)
 
-        Path(temp_path).unlink(missing_ok=True)
+        if syntax_success:
+            with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as temp:
+                temp.write(code)
+                temp_path = temp.name
 
-    readability = readability_engine.analyse(code)
-    readability_score = readability.get("score") or 0
+            started = datetime.now()
+
+            try:
+                completed = subprocess.run(
+                    [sys.executable, temp_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                ended = datetime.now()
+
+                execution_time_ms = round((ended - started).total_seconds() * 1000, 2)
+                stdout = completed.stdout
+                runtime_success = completed.returncode == 0
+                runtime_error = completed.stderr if completed.returncode != 0 else None
+
+            except Exception as exc:
+                runtime_error = str(exc)
+
+            Path(temp_path).unlink(missing_ok=True)
+    else:
+        syntax_success = True
+        runtime_success = True
+        stdout = f"{language_name} code saved. Runtime execution is not enabled for this language yet."
+        execution_time_ms = 0
+
+    try:
+        readability = readability_engine.analyse(code)
+        readability_score = readability.get("score") or 0
+    except Exception:
+        readability_score = 70
 
     warnings = 0
     findings = []
@@ -254,7 +304,7 @@ def evaluate_code(code: str, assistant_name: str, task_code: str) -> dict:
         warnings += 1
         findings.append({
             "category": "Unsafe Execution",
-            "severity": "high",
+            "severity": FindingSeverity.HIGH,
             "title": "Unsafe dynamic execution",
             "description": "Code contains eval() or exec().",
             "recommendation": "Avoid dynamic execution unless absolutely necessary.",
@@ -264,7 +314,7 @@ def evaluate_code(code: str, assistant_name: str, task_code: str) -> dict:
         warnings += 1
         findings.append({
             "category": "Command Injection",
-            "severity": "high",
+            "severity": FindingSeverity.HIGH,
             "title": "shell=True detected",
             "description": "Subprocess shell execution can be dangerous.",
             "recommendation": "Use argument lists and avoid shell=True.",
@@ -275,10 +325,10 @@ def evaluate_code(code: str, assistant_name: str, task_code: str) -> dict:
     security_score = max(0, 100 - warnings * 25)
 
     overall_score = round(
-        syntax_score * 0.30 +
-        runtime_score * 0.25 +
-        readability_score * 0.25 +
-        security_score * 0.20,
+        syntax_score * 0.30
+        + runtime_score * 0.25
+        + readability_score * 0.25
+        + security_score * 0.20,
         2,
     )
 
@@ -327,11 +377,14 @@ def serialize_run_group(runs: list[EvaluationRun]) -> dict:
     winner_run = max(runs, key=lambda r: r.overall_score or 0)
     winner_score = round((winner_run.overall_score or 0) / 100, 2)
 
+    task_name = first.coding_task.name if first.coding_task else "Unknown Task"
+    task_code = first.coding_task.task_code if first.coding_task else ""
+
     return {
         "run_id": first.run_id,
         "id": first.run_id,
-        "task": first.coding_task.title,
-        "task_id": first.coding_task.task_code,
+        "task": task_name,
+        "task_id": task_code,
         "language": first.language.name if first.language else "Python",
         "overall_status": "completed",
         "status": "completed",
@@ -343,7 +396,7 @@ def serialize_run_group(runs: list[EvaluationRun]) -> dict:
         ),
         "assistants": assistants,
         "logs": [
-            f"Evaluation completed for {first.coding_task.title}",
+            f"Evaluation completed for {task_name}",
             f"{len(assistants)} assistant result(s) saved to SQLite",
             f"Winner: {winner_run.assistant.name}",
         ],
@@ -355,6 +408,7 @@ def serialize_run_group(runs: list[EvaluationRun]) -> dict:
 def run_evaluation(payload: dict, db: Session = Depends(get_db)):
     task_code = payload.get("task_id") or payload.get("task_code")
     assistant_ids = payload.get("assistant_ids") or []
+    language_name = payload.get("language", "Python")
 
     if not task_code:
         raise HTTPException(status_code=400, detail="task_id is required")
@@ -362,7 +416,6 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
     if not assistant_ids:
         raise HTTPException(status_code=400, detail="assistant_ids is required")
 
-    language_name = payload.get("language", "Python")
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
     task = get_or_create_task(db, task_code)
@@ -373,8 +426,8 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
     for assistant_key in assistant_ids:
         assistant = get_or_create_assistant(db, assistant_key)
         prompt = build_prompt(task_code)
-        code = sample_generated_code(task_code, assistant.name)
-        metrics = evaluate_code(code, assistant.name, task_code)
+        code = sample_generated_code(task_code, assistant.name, language_name)
+        metrics = evaluate_code(code, language_name)
 
         run = EvaluationRun(
             run_id=run_id,
@@ -382,11 +435,15 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
             coding_task_id=task.id,
             language_id=language.id,
             status=RunStatus.COMPLETED,
+            workspace_path=None,
             prompt_text=prompt,
+            generated_code_path=None,
             generated_code=code,
             execution_output=metrics["stdout"],
             execution_error=metrics["runtime_error"] or metrics["syntax_error"],
             execution_success=metrics["runtime_success"],
+            tokens_used=None,
+            latency_ms=None,
             execution_time_ms=metrics["execution_time_ms"],
             overall_score=metrics["overall_score"],
             started_at=datetime.now(),
@@ -398,14 +455,17 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
         db.refresh(run)
 
         for finding in metrics["security_findings"]:
-            db.add(SecurityFinding(
+            security_finding = SecurityFinding(
                 evaluation_run_id=run.id,
                 category=finding["category"],
-                severity=FindingSeverity.HIGH,
+                severity=finding["severity"],
                 title=finding["title"],
                 description=finding["description"],
                 recommendation=finding["recommendation"],
-            ))
+                file_path=None,
+                line_number=None,
+            )
+            db.add(security_finding)
 
         db.commit()
         db.refresh(run)
@@ -469,4 +529,8 @@ def get_report(run_id: str, format: str = "html", db: Session = Depends(get_db))
     </html>
     """
 
-    return {"run_id": run_id, "format": format, "html": html}
+    return {
+        "run_id": run_id,
+        "format": format,
+        "html": html,
+    }

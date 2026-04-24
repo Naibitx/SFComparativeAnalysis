@@ -28,7 +28,7 @@ export const evaluationsApi = {
     }),
 
   list: (taskId) =>
-    request(taskId ? `/api/evaluations?task_id=${taskId}` : '/api/evaluations'),
+    request(taskId ? `/api/evaluations/?task_id=${taskId}` : '/api/evaluations/'),
 
   get: (runId) => request(`/api/evaluations/${runId}`),
 
