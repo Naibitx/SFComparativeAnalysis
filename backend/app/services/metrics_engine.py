@@ -14,8 +14,8 @@ import signal
 from dataclasses import dataclass
 from typing import Any, Optional
 from app.services.readability_engine import ReadabilityEngine
-from app.services.security_scanner import SecurityScanner
-from app.base_assistant import BaseAssistant
+from app.services.security_scanner import scan_code
+from app.integrations.base_assistant import BaseAssistant
  
  
 RUNTIME_TIMEOUT_SECONDS = 10
@@ -31,8 +31,7 @@ class TestCase:
 class MetricsEngine:
     def __init__(self) -> None:
         self._readability_engine = ReadabilityEngine()
-        self._security_scanner = SecurityScanner()
- 
+        self._security_scanner = scan_code
     def evaluate_assistant(
         self,
         assistant: BaseAssistant,
@@ -46,7 +45,7 @@ class MetricsEngine:
     ) -> dict:
         # Start total timer
         total_start = time.perf_counter()
- 
+
         # Ask the assistant to generate code
         try:
             response = assistant.generate_code(
@@ -65,7 +64,7 @@ class MetricsEngine:
                 "overall_score": 0.0,
                 "timestamp": time.time(),
             }
- 
+
         # Make sure the response is a dict
         if not isinstance(response, dict):
             return {
@@ -78,12 +77,12 @@ class MetricsEngine:
                 "overall_score": 0.0,
                 "timestamp": time.time(),
             }
- 
+
         code = response.get("code", "")
         explanation = response.get("explanation", "")
         tokens_used = response.get("tokens_used")
         latency_ms = response.get("latency_ms")
- 
+
         # only python
         if language.lower() != "python":
             return {
@@ -100,7 +99,7 @@ class MetricsEngine:
                 "overall_score": 0.0,
                 "timestamp": time.time(),
             }
- 
+
         # Run checks
         syntax_result = self._check_python_syntax(code)
         runtime_result = self._check_python_runtime(code)
@@ -109,13 +108,13 @@ class MetricsEngine:
             test_cases=test_cases or [],
             entry_function=entry_function,
         )
- 
+
         if readability_result is None:
             readability_result = self._readability_engine.analyse(code)
- 
+
         if security_result is None:
-            security_result = self._security_scanner.scan(code)
- 
+            security_result = self._security_scanner(code, assistant.name, "unknown_task")
+
         overall_score = self._compute_overall_score(
             syntax_result=syntax_result,
             runtime_result=runtime_result,
@@ -123,9 +122,9 @@ class MetricsEngine:
             readability_result=readability_result,
             security_result=security_result,
         )
- 
+
         total_end = time.perf_counter()
- 
+
         return {
             "assistant": assistant.name,
             "provider": assistant.provider,
@@ -145,7 +144,7 @@ class MetricsEngine:
             "overall_score": overall_score,
             "timestamp": time.time(),
         }
- 
+
     def compare_assistants(
         self,
         assistants: list[BaseAssistant],
@@ -158,17 +157,17 @@ class MetricsEngine:
         security_results: Optional[dict[str, dict]] = None,
     ) -> list[dict]:
         results = []
- 
+
         for assistant in assistants:
             assistant_readability = None
             assistant_security = None
- 
+
             if readability_results is not None:
                 assistant_readability = readability_results.get(assistant.name)
- 
+
             if security_results is not None:
                 assistant_security = security_results.get(assistant.name)
- 
+
             result = self.evaluate_assistant(
                 assistant=assistant,
                 prompt=prompt,
@@ -180,10 +179,10 @@ class MetricsEngine:
                 security_result=assistant_security,
             )
             results.append(result)
- 
+
         results.sort(key=lambda item: item.get("overall_score", 0.0), reverse=True)
         return results
- 
+
     def _check_python_syntax(self, code: str) -> dict:
         # Check if Python code parses correctly
         try:

@@ -84,8 +84,8 @@ def scan_code(code_path: str, assistant: str, task: str) -> dict:
     critical = _has_critical(findings)
 
     log_event("SECURITY_SCAN", assistant, task,
-              "critical" if critical else "clean",
-              f"{len(findings)} finding(s) via bandit")
+            "critical" if critical else "clean",
+            f"{len(findings)} finding(s) via bandit")
 
     return {
         "status":         "success",

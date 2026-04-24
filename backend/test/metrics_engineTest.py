@@ -1,5 +1,5 @@
-from metrics_engine import MetricsEngine, TestCase
-from chatgpt_integration import ChatGPTAssistant
+from app.services.metrics_engine import MetricsEngine, TestCase
+from app.integrations.chatgpt_integration import ChatGPTAssistant
 
 assistant = ChatGPTAssistant(api_key="your_key", model_version="gpt-4o")
 
