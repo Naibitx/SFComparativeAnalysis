@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CROSMiddleware #this to connect frontedn and backend
+from fastapi.middleware.cors import CORSMiddleware #this to connect frontedn and backend
 #below we have our router imports 
 from app.routes.tasks import router as t_Router
 from app.routes.runs import router as ru_Router
@@ -8,7 +8,7 @@ from app.routes.settings import router as s_Router
 
 app= FastAPI(title= "AI Comparator Assistant")
 app.add_middleware(
-    CROSMiddleware,
+    CORSMiddleware,
     allow_origins= ["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
