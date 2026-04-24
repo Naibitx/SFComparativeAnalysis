@@ -14,13 +14,13 @@ const MOCK_REPORTS = [
 ];
 
 export default function Reports({ navigateTo }) {
-  const [reports, setReports] = useState(MOCK_REPORTS);
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     reportsApi.list()
       .then(data => { if (data?.reports) setReports(data.reports); })
-      .catch(() => {}) // keep mock data
+      .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 

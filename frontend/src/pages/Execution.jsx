@@ -74,21 +74,10 @@ export default function Execution({ navigateTo, activeRunId }) {
           }
           setTimeout(poll, 2000);
         }
-      } catch {
-        // Backend not available — use mock with a drip-feed animation
+      } catch (e) {
         if (!cancelled) {
-          setStatus(MOCK_STATUS);
-          const interval = setInterval(() => {
-            if (cancelled) { clearInterval(interval); return; }
-            setLogs(prev => {
-              if (logIdx >= MOCK_LOGS.length) {
-                clearInterval(interval);
-                setDone(true);
-                return prev;
-              }
-              return [...prev, MOCK_LOGS[logIdx++]];
-            });
-          }, 220);
+          setLogs(prev => [...prev, `Backend error: ${e.message}`]);
+          setDone(true);
         }
       }
     }
@@ -104,7 +93,16 @@ export default function Execution({ navigateTo, activeRunId }) {
     }
   }, [logs]);
 
-  const s = status || MOCK_STATUS;
+  if (!status) {
+  return (
+    <div className="page animate-in">
+      <h1 className="page-title">Execution Monitor</h1>
+      <p className="page-sub">Loading run from backend...</p>
+    </div>
+  );
+}
+const s = status;
+
   const overallDone = done || ['completed', 'failed'].includes(s.overall_status);
 
   return (

@@ -88,7 +88,10 @@ const METRIC_COLS = [
 ];
 
 function ReadBar({ value }) {
+  if (value == null) return <span className="mono">—</span>;
+
   const color = value >= 80 ? 'var(--green)' : value >= 60 ? 'var(--yellow)' : 'var(--red)';
+
   return (
     <div className="bar-wrap">
       <div className="bar-fill" style={{ width: `${value}%`, background: color }} />
@@ -98,12 +101,15 @@ function ReadBar({ value }) {
 }
 
 function ScoreBar({ value }) {
+  if (value == null) return <span className="mono">—</span>;
+
   const pct = Math.round(value * 100);
   const color = pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--yellow)' : 'var(--red)';
+
   return (
     <div className="bar-wrap">
       <div className="bar-fill" style={{ width: `${pct}%`, background: color }} />
-      <span className="bar-label">{value.toFixed(2)}</span>
+      <span className="bar-label">{Number(value).toFixed(2)}</span>
     </div>
   );
 }
@@ -114,13 +120,25 @@ export default function Results({ navigateTo, activeRunId }) {
   const [tab, setTab] = useState('comparison');
 
   useEffect(() => {
-    if (!activeRunId) { setResult(MOCK_RESULT); return; }
+    if (!activeRunId) return;
     evaluationsApi.get(activeRunId)
-      .then(data => setResult(data || MOCK_RESULT))
-      .catch(() => setResult(MOCK_RESULT));
+      .then(data => setResult(data))
+      .catch(err => {
+        console.error(err);
+        setResult(null);
+      });
   }, [activeRunId]);
 
-  const r = result || MOCK_RESULT;
+  if (!result) {
+  return (
+    <div className="page animate-in">
+      <h1 className="page-title">Results</h1>
+      <p className="page-sub">Loading results from backend...</p>
+    </div>
+  );
+}
+
+const r = result;
 
   return (
     <div className="page animate-in">
@@ -146,7 +164,9 @@ export default function Results({ navigateTo, activeRunId }) {
             <div className="winner-name">{r.winner}</div>
           </div>
           <div className="winner-score">
-            <span className="score-num">{(r.winner_score * 100).toFixed(0)}</span>
+            <span className="score-num">
+              {r.winner_score != null ? (r.winner_score * 100).toFixed(0) : '—'}
+            </span>
             <span className="score-unit">/100</span>
           </div>
         </div>

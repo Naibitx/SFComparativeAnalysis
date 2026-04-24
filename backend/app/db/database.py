@@ -10,8 +10,7 @@ from contextlib import contextmanager
 from typing import Generator
 import logging
 
-from .config import get_settings
-
+from app.config import get_settings
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +46,8 @@ class DatabaseManager:
             # Set connection timeout
             @event.listens_for(self.engine, "connect")
             def receive_connect(dbapi_connection, connection_record):
-                dbapi_connection.settimeout(30)
+                if hasattr(dbapi_connection, "settimeout"):
+                    dbapi_connection.settimeout(30)
             
             logger.info("✓ Database engine initialized successfully")
             
@@ -86,9 +86,9 @@ class DatabaseManager:
             raise RuntimeError("Database not initialized")
         
         # Import models to register them with Base
-        from . import models  # noqa: F401
+        from app.Models import Base  # noqa: F401
         
-        models.Base.metadata.create_all(bind=self.engine)
+        Base.metadata.create_all(bind=self.engine)
         logger.info("✓ All database tables created")
     
     def drop_all_tables(self):

@@ -28,7 +28,7 @@ class EvaluationRun(TimestampMixin, Base):
     __tablename__ = "evaluation_runs"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    run_id: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    run_id: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     assistant_id: Mapped[int] = mapped_column(ForeignKey("assistants.id"), nullable=False)
     coding_task_id: Mapped[int] = mapped_column(ForeignKey("coding_tasks.id"), nullable=False)
     language_id: Mapped[Optional[int]] = mapped_column(ForeignKey("languages.id"), nullable=True)

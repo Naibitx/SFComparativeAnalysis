@@ -1,24 +1,25 @@
 from functools import lru_cache
 from pydantic_settings import BaseSettings
 
-class Settings(BaseSettings):#this wll load environment variables from our .env
 
-    #app settings below
+class Settings(BaseSettings):
     app_name: str = "AI Comparator"
-    debug: bool= True
+    debug: bool = True
 
-    #database setting bellow
-    database_url:str = ""
+    database_url: str = "sqlite:///./app.db"
 
-    #api keys settings bellow
+    db_echo: bool = False
+    db_pool_size: int = 5
+    db_max_overflow: int = 10
+    db_pool_pre_ping: bool = True
 
-    #paths bellow
-    workspace_dir: str= "./workspace"
+    workspace_dir: str = "./workspace"
+    reports_dir: str = "./reports/generated"
 
     class Config:
-        env_file=".env" #loads our env file
+        env_file = ".env"
+        extra= "ignore"
 
-#to load just once
 @lru_cache
 def get_settings():
-    return Settings
+    return Settings()
