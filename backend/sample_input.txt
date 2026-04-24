@@ -1,0 +1,22 @@
+Welcome to the AI Comparative Analysis Framework.
+
+This file is used for benchmarking coding assistants on file I/O tasks.
+
+Instructions:
+- Read the contents of this file.
+- Return the text exactly as it appears.
+- Do not modify, summarize, or reformat the content.
+
+Key Metrics Being Evaluated:
+1. Correctness of file reading
+2. Handling of file paths
+3. Code readability
+4. Error handling
+
+Test Data:
+Line 1: The quick brown fox jumps over the lazy dog.
+Line 2: 1234567890
+Line 3: Symbols !@#$%^&*() are included.
+Line 4: Mixed CASE letters should be preserved.
+
+End of file.

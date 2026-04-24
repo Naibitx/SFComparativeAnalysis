@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from app.integrations.assistant_factory import get_assistant_client
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -246,6 +247,19 @@ if __name__ == "__main__":
 
 
 def evaluate_code(code: str, language_name: str = "Python") -> dict:
+    if language_name == "Python":
+        replacements = [
+            "example.txt",
+            "your_file.txt",
+            "my_text_file.txt",
+            "file.txt",
+            "input.txt",
+            "sample.txt",
+        ]
+
+        for name in replacements:
+            code = code.replace(name, "sample_input.txt")
+
     syntax_success = True
     syntax_error = None
     runtime_success = False
@@ -426,8 +440,18 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
     for assistant_key in assistant_ids:
         assistant = get_or_create_assistant(db, assistant_key)
         prompt = build_prompt(task_code)
-        code = sample_generated_code(task_code, assistant.name, language_name)
+        assistant_client = get_assistant_client(assistant_key)
+        generation = assistant_client.generate_code(prompt, language_name)
+        if "code" in generation:
+            code = generation["code"]
+            tokens_used = generation.get("tokens_used")
+            latency_ms = generation.get("latency_ms")
+        else:
+            code = f"# Generation failed for {assistant.name}\nprint('Generation failed')"
+            tokens_used = None
+            latency_ms = None
         metrics = evaluate_code(code, language_name)
+
 
         run = EvaluationRun(
             run_id=run_id,
@@ -442,8 +466,8 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
             execution_output=metrics["stdout"],
             execution_error=metrics["runtime_error"] or metrics["syntax_error"],
             execution_success=metrics["runtime_success"],
-            tokens_used=None,
-            latency_ms=None,
+            tokens_used=tokens_used,
+            latency_ms=latency_ms,
             execution_time_ms=metrics["execution_time_ms"],
             overall_score=metrics["overall_score"],
             started_at=datetime.now(),
