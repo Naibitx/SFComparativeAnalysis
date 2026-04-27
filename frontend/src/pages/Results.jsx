@@ -30,7 +30,7 @@ const METRIC_COLS = [
   {
     key: 'memory_mb',
     label: 'Memory (MB)',
-    render: v => v != null ? <span className="mono">{String(v)}</span> : '—',
+    render: v => v != null ? <span className="mono">{Number(v).toFixed(2)}</span> : '—',
   },
   {
     key: 'readability',
@@ -51,12 +51,15 @@ const METRIC_COLS = [
 
 function safeText(value, fallback = '—') {
   if (value == null) return fallback;
+
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
   }
+
   if (typeof value === 'object') {
     return value.name || value.label || value.id || fallback;
   }
+
   return fallback;
 }
 
@@ -69,8 +72,8 @@ function normalizeAssistant(a, index) {
     correct: Boolean(a?.correct),
     warnings: Number(a?.warnings || 0),
     time_ms: a?.time_ms ?? null,
-    memory_mb: a?.memory_mb ?? null,
-    readability: a?.readability ?? null,
+    memory_mb: a?.memory_mb ?? a?.memory ?? null,
+    readability: a?.readability ?? a?.readability_score ?? null,
     security: Number(a?.security || 0),
     score: a?.score ?? null,
     code: typeof a?.code === 'string' ? a.code : '',
@@ -107,7 +110,7 @@ function ReadBar({ value }) {
   return (
     <div className="bar-wrap">
       <div className="bar-fill" style={{ width: `${numeric}%`, background: color }} />
-      <span className="bar-label">{numeric}</span>
+      <span className="bar-label">{numeric.toFixed(0)}</span>
     </div>
   );
 }

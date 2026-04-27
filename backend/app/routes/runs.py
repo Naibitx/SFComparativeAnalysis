@@ -4,16 +4,16 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from app.integrations.assistant_factory import get_assistant_client
+import tracemalloc
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
+from app.integrations.assistant_factory import get_assistant_client
 from app.Models.assistant import Assistant
 from app.Models.coding_task import CodingTask
-from app.Models.language import Language
-from app.Models.language import LanguageCategory
+from app.Models.language import Language, LanguageCategory
 from app.Models.evaluation_run import EvaluationRun, RunStatus
 from app.Models.security_finding import SecurityFinding, FindingSeverity
 from app.services.prompt_builder import build_prompt
@@ -71,7 +71,7 @@ def get_or_create_assistant(db: Session, assistant_key: str) -> Assistant:
     assistant = Assistant(
         name=name,
         provider=name,
-        model_version="local-evaluation",
+        model_version="openrouter",
         description="Stored assistant record for evaluation results.",
         is_active=True,
     )
@@ -125,147 +125,64 @@ def get_or_create_task(db: Session, task_code: str) -> CodingTask:
     return task
 
 
-def sample_generated_code(task_code: str, assistant_name: str, language_name: str = "Python") -> str:
-    """
-    This creates code that the backend can evaluate and save.
-    Later, this function can be replaced with real assistant API generation.
-    """
-    task_code = task_code.lower()
+def normalize_task_a_code(code: str, input_file: str) -> str:
+    replacements = [
+        "example.txt",
+        "your_file.txt",
+        "my_text_file.txt",
+        "file.txt",
+        "input.txt",
+        "sample.txt",
+        "sample_input.txt",
+    ]
 
-    if language_name != "Python":
-        return f"// Generated for {assistant_name} - Task {task_code.upper()}\n// {build_prompt(task_code)}\n"
+    for name in replacements:
+        code = code.replace(f'"{name}"', f'"{input_file}"')
+        code = code.replace(f"'{name}'", f"'{input_file}'")
 
-    header = f"# Generated for {assistant_name} - Task {task_code.upper()}\n"
+    return code
 
-    code_by_task = {
-        "a": """
-from pathlib import Path
 
-def read_text_file(path: str) -> str:
-    \"\"\"Read and return the contents of a text file.\"\"\"
-    return Path(path).read_text(encoding="utf-8")
+def normalize_task_b_code(code: str, input_file: str) -> str:
+    replacements = [
+        "data.json",
+        "sample.json",
+        "input.json",
+        "file.json",
+        "sample_data.json",
+    ]
 
-if __name__ == "__main__":
-    print("Ready to read a text file.")
-""",
-        "b": """
-import json
-import threading
-from pathlib import Path
+    for name in replacements:
+        code = code.replace(f'"{name}"', f'"{input_file}"')
+        code = code.replace(f"'{name}'", f"'{input_file}'")
 
-def read_json_threaded(path: str) -> dict:
-    \"\"\"Read a JSON file using a worker thread.\"\"\"
-    result = {}
+    return code
 
-    def worker():
-        result.update(json.loads(Path(path).read_text(encoding="utf-8")))
 
-    thread = threading.Thread(target=worker)
-    thread.start()
-    thread.join()
-    return result
+def normalize_task_e_code(code: str, input_file: str) -> str:
+    replacements = [
+        "input.txt",
+        "sample.txt",
+        "example.txt",
+        "my_text_file.txt",
+        "file.txt",
+    ]
 
-if __name__ == "__main__":
-    print("Ready to read JSON with threads.")
-""",
-        "c": """
-from pathlib import Path
+    for name in replacements:
+        code = code.replace(f'"{name}"', f'"{input_file}"')
+        code = code.replace(f"'{name}'", f"'{input_file}'")
 
-def write_text_file(path: str, content: str) -> None:
-    \"\"\"Write text content to a file.\"\"\"
-    Path(path).write_text(content, encoding="utf-8")
-
-if __name__ == "__main__":
-    print("Ready to write a text file.")
-""",
-        "d": """
-import json
-import threading
-from pathlib import Path
-
-def write_json_threaded(path: str, data: dict) -> None:
-    \"\"\"Write JSON data using a worker thread.\"\"\"
-    def worker():
-        Path(path).write_text(json.dumps(data, indent=2), encoding="utf-8")
-
-    thread = threading.Thread(target=worker)
-    thread.start()
-    thread.join()
-
-if __name__ == "__main__":
-    print("Ready to write JSON with threads.")
-""",
-        "e": """
-import zipfile
-from pathlib import Path
-
-def create_zip(input_file: str, zip_file: str) -> None:
-    \"\"\"Create a zip archive containing one input file.\"\"\"
-    with zipfile.ZipFile(zip_file, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.write(input_file, arcname=Path(input_file).name)
-
-if __name__ == "__main__":
-    print("Ready to create a ZIP file.")
-""",
-        "f": """
-def get_sample_record():
-    \"\"\"Placeholder MySQL retrieval function for evaluation demo.\"\"\"
-    query = "SELECT * FROM sample LIMIT 1"
-    return {"query": query, "status": "ready"}
-
-if __name__ == "__main__":
-    print("Ready to connect to MySQL.")
-""",
-        "g": """
-def get_sample_document():
-    \"\"\"Placeholder MongoDB retrieval function for evaluation demo.\"\"\"
-    return {"collection": "sample", "status": "ready"}
-
-if __name__ == "__main__":
-    print("Ready to connect to MongoDB.")
-""",
-        "h": """
-import hashlib
-import secrets
-
-def hash_password(password: str) -> tuple[str, str]:
-    \"\"\"Hash a password with a random salt.\"\"\"
-    salt = secrets.token_hex(16)
-    password_hash = hashlib.sha256((salt + password).encode()).hexdigest()
-    return salt, password_hash
-
-def verify_password(password: str, salt: str, password_hash: str) -> bool:
-    \"\"\"Verify a password against a stored salted hash.\"\"\"
-    return hashlib.sha256((salt + password).encode()).hexdigest() == password_hash
-
-if __name__ == "__main__":
-    print("Ready for password authentication.")
-""",
-    }
-
-    return header + code_by_task.get(task_code, "print('Unknown task')\n")
+    return code
 
 
 def evaluate_code(code: str, language_name: str = "Python") -> dict:
-    if language_name == "Python":
-        replacements = [
-            "example.txt",
-            "your_file.txt",
-            "my_text_file.txt",
-            "file.txt",
-            "input.txt",
-            "sample.txt",
-        ]
-
-        for name in replacements:
-            code = code.replace(name, "sample_input.txt")
-
     syntax_success = True
     syntax_error = None
     runtime_success = False
     runtime_error = None
     stdout = ""
     execution_time_ms = None
+    memory_mb = None
 
     if language_name == "Python":
         try:
@@ -282,14 +199,20 @@ def evaluate_code(code: str, language_name: str = "Python") -> dict:
             started = datetime.now()
 
             try:
+                tracemalloc.start()
+
                 completed = subprocess.run(
                     [sys.executable, temp_path],
                     capture_output=True,
                     text=True,
                     timeout=10,
                 )
-                ended = datetime.now()
 
+                current, peak = tracemalloc.get_traced_memory()
+                memory_mb = round(peak / (1024 * 1024), 2)
+                tracemalloc.stop()
+
+                ended = datetime.now()
                 execution_time_ms = round((ended - started).total_seconds() * 1000, 2)
                 stdout = completed.stdout
                 runtime_success = completed.returncode == 0
@@ -297,13 +220,19 @@ def evaluate_code(code: str, language_name: str = "Python") -> dict:
 
             except Exception as exc:
                 runtime_error = str(exc)
+                try:
+                    tracemalloc.stop()
+                except RuntimeError:
+                    pass
 
             Path(temp_path).unlink(missing_ok=True)
+
     else:
         syntax_success = True
         runtime_success = True
         stdout = f"{language_name} code saved. Runtime execution is not enabled for this language yet."
         execution_time_ms = 0
+        memory_mb = 0
 
     try:
         readability = readability_engine.analyse(code)
@@ -334,6 +263,16 @@ def evaluate_code(code: str, language_name: str = "Python") -> dict:
             "recommendation": "Use argument lists and avoid shell=True.",
         })
 
+    if "import anthropic" in code.lower() or "anthropic.anthropic" in code.lower():
+        warnings += 1
+        findings.append({
+            "category": "AI API Misuse",
+            "severity": FindingSeverity.HIGH,
+            "title": "Generated code imports Anthropic SDK",
+            "description": "Generated benchmark code should not call AI APIs.",
+            "recommendation": "Prompt should forbid AI SDK usage and generated code should be standalone.",
+        })
+
     syntax_score = 100 if syntax_success else 0
     runtime_score = 100 if runtime_success else 0
     security_score = max(0, 100 - warnings * 25)
@@ -353,6 +292,7 @@ def evaluate_code(code: str, language_name: str = "Python") -> dict:
         "runtime_error": runtime_error,
         "stdout": stdout,
         "execution_time_ms": execution_time_ms,
+        "memory_mb": memory_mb,
         "readability_score": readability_score,
         "security_warnings": warnings,
         "security_findings": findings,
@@ -379,8 +319,9 @@ def serialize_run_group(runs: list[EvaluationRun]) -> dict:
             "correct": run.execution_success,
             "warnings": findings_count,
             "time_ms": run.execution_time_ms,
-            "memory_mb": None,
-            "readability": None,
+            "memory_mb": run.memory_mb,
+            "readability": run.readability_score,
+            "readability_score": run.readability_score,
             "security": findings_count,
             "score": round((run.overall_score or 0) / 100, 2),
             "code": run.generated_code or "",
@@ -423,6 +364,7 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
     task_code = payload.get("task_id") or payload.get("task_code")
     assistant_ids = payload.get("assistant_ids") or []
     language_name = payload.get("language", "Python")
+    input_file = payload.get("input_file") or "sample_input.txt"
 
     if not task_code:
         raise HTTPException(status_code=400, detail="task_id is required")
@@ -430,6 +372,7 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
     if not assistant_ids:
         raise HTTPException(status_code=400, detail="assistant_ids is required")
 
+    task_code = task_code.lower()
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
     task = get_or_create_task(db, task_code)
@@ -440,8 +383,18 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
     for assistant_key in assistant_ids:
         assistant = get_or_create_assistant(db, assistant_key)
         prompt = build_prompt(task_code)
+
+        if task_code in ["a", "b", "e"]:
+            prompt += f"""
+
+Important runtime input:
+- Use this exact input file path: {input_file}
+- Do not use placeholder file names.
+"""
+
         assistant_client = get_assistant_client(assistant_key)
         generation = assistant_client.generate_code(prompt, language_name)
+
         if "code" in generation:
             code = generation["code"]
             tokens_used = generation.get("tokens_used")
@@ -450,8 +403,16 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
             code = f"# Generation failed for {assistant.name}\nprint('Generation failed')"
             tokens_used = None
             latency_ms = None
-        metrics = evaluate_code(code, language_name)
 
+        if language_name == "Python":
+            if task_code == "a":
+                code = normalize_task_a_code(code, input_file)
+            elif task_code == "b":
+                code = normalize_task_b_code(code, input_file)
+            elif task_code == "e":
+                code = normalize_task_e_code(code, input_file)
+
+        metrics = evaluate_code(code, language_name)
 
         run = EvaluationRun(
             run_id=run_id,
@@ -469,6 +430,8 @@ def run_evaluation(payload: dict, db: Session = Depends(get_db)):
             tokens_used=tokens_used,
             latency_ms=latency_ms,
             execution_time_ms=metrics["execution_time_ms"],
+            memory_mb=metrics["memory_mb"],
+            readability_score=metrics["readability_score"],
             overall_score=metrics["overall_score"],
             started_at=datetime.now(),
             completed_at=datetime.now(),

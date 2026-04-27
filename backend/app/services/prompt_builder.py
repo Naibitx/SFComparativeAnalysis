@@ -107,9 +107,11 @@ Task:
 Create a simple authentication system.
 
 Requirements:
-- Store username and password variables
-- Check input credentials
-- Print success or failure
+- Use variables: correct_username and correct_password
+- Use variables: input_username and input_password
+- Compare them
+- Print "Login successful" if correct
+- Otherwise print "Login failed"
+- Do NOT use external libraries
+- Return only valid Python code
 """
-
-    return "Invalid task"

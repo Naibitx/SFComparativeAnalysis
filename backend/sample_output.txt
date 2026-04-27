@@ -1,0 +1,3 @@
+Hello, this is sample text written to a file.
+This is the second line of the file.
+Writing to files in Python is straightforward and easy.

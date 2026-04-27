@@ -1,0 +1,11 @@
+{
+    "name": "Sample Data",
+    "version": 1.0,
+    "items": [
+        "apple",
+        "banana",
+        "cherry"
+    ],
+    "active": true,
+    "count": 42
+}

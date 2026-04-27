@@ -1,11 +1,18 @@
 {
-    "users": [
-        { "id": 1, "name": "Alice", "age": 25 },
-        { "id": 2, "name": "Bob", "age": 30 },
-        { "id": 3, "name": "Charlie", "age": 22 }
+    "name": "John Doe",
+    "age": 30,
+    "email": "johndoe@example.com",
+    "is_active": true,
+    "scores": [
+        95,
+        87,
+        92,
+        78
     ],
-    "products": [
-        { "id": 101, "name": "Laptop", "price": 999.99 },
-        { "id": 102, "name": "Phone", "price": 699.50 }
-    ]
+    "address": {
+        "street": "123 Main St",
+        "city": "Springfield",
+        "state": "IL",
+        "zip": "62701"
+    }
 }

@@ -1,0 +1,2 @@
+This is a test file for creating a zip archive.
+It contains some sample text.
