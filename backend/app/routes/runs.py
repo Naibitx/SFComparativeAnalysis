@@ -309,6 +309,8 @@ def serialize_run_group(runs: list[EvaluationRun]) -> dict:
 
     for run in runs:
         findings_count = len(run.security_findings or [])
+        score_100 = run.overall_score or 0
+        score_normalized = round(score_100 / 100, 2)
 
         assistants.append({
             "id": run.assistant.name.lower().replace(" ", "_"),
@@ -323,14 +325,26 @@ def serialize_run_group(runs: list[EvaluationRun]) -> dict:
             "readability": run.readability_score,
             "readability_score": run.readability_score,
             "security": findings_count,
-            "score": round((run.overall_score or 0) / 100, 2),
+            "score": score_normalized,
+            "score_raw": score_100,
             "code": run.generated_code or "",
             "output": run.execution_output or "",
             "error": run.execution_error,
         })
 
-    winner_run = max(runs, key=lambda r: r.overall_score or 0)
-    winner_score = round((winner_run.overall_score or 0) / 100, 2)
+    assistants = sorted(
+        assistants,
+        key=lambda a: (
+            a["correct"],
+            a["compile"],
+            a["score_raw"],
+            -(a["security"]),
+            -(a["time_ms"] or 999999),
+        ),
+        reverse=True,
+    )
+
+    winner = assistants[0]
 
     task_name = first.coding_task.name if first.coding_task else "Unknown Task"
     task_code = first.coding_task.task_code if first.coding_task else ""
@@ -343,17 +357,17 @@ def serialize_run_group(runs: list[EvaluationRun]) -> dict:
         "language": first.language.name if first.language else "Python",
         "overall_status": "completed",
         "status": "completed",
-        "winner": winner_run.assistant.name,
-        "winner_score": winner_score,
+        "winner": winner["name"],
+        "winner_score": winner["score"],
         "winner_justification": (
-            f"{winner_run.assistant.name} had the highest saved overall score "
-            f"for this run: {winner_run.overall_score or 0}/100."
+            f"{winner['name']} had the best result based on correctness, compilation, "
+            f"overall score, security, and execution time."
         ),
         "assistants": assistants,
         "logs": [
             f"Evaluation completed for {task_name}",
             f"{len(assistants)} assistant result(s) saved to SQLite",
-            f"Winner: {winner_run.assistant.name}",
+            f"Winner: {winner['name']}",
         ],
         "date": first.created_at.isoformat() if first.created_at else datetime.now().isoformat(),
     }
